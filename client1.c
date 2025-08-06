@@ -1,0 +1,82 @@
+#include <arpa/inet.h> // inet_addr()
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h> // memset, strncmp
+#include <sys/socket.h>
+#include <unistd.h> // read(), write(), close()
+
+#define MAX 1024
+#define PORT 8080
+#define SA struct sockaddr
+
+void func(int sockfd)
+{
+    char buff[MAX];
+    ssize_t n;
+
+    for (;;) {
+        memset(buff, 0, sizeof(buff));
+        printf("Enter the string: ");
+
+        if (fgets(buff, sizeof(buff), stdin) == NULL) {
+            printf("Error reading input.\n");
+            break;
+        }
+        buff[strcspn(buff, "\n")] = '\0'; // Remove newline
+
+        // Send message to server
+        write(sockfd, buff, strlen(buff));
+
+        // Read server response
+        memset(buff, 0, sizeof(buff));
+        n = read(sockfd, buff, sizeof(buff) - 1);
+        if (n <= 0) {
+            printf("Server disconnected or error.\n");
+            break;
+        }
+        buff[n] = '\0'; // Null terminate
+
+        printf("From Server: %s\n", buff);
+
+        // Exit on "exit"
+        if (strncmp(buff, "exit", 4) == 0) {
+            printf("Client Exit...\n");
+            break;
+        }
+    }
+}
+
+int main()
+{
+    int sockfd;
+    struct sockaddr_in servaddr;
+
+    // Create socket
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd == -1) {
+        printf("Socket creation failed...\n");
+        exit(EXIT_FAILURE);
+    }
+    printf("Socket successfully created..\n");
+
+    memset(&servaddr, 0, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(PORT);
+    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    // Connect to server
+    if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) != 0) {
+        printf("Connection with the server failed...\n");
+        exit(EXIT_FAILURE);
+    }
+    printf("Connected to the server..\n");
+
+    // Start chat
+    func(sockfd);
+
+    // Close socket
+    close(sockfd);
+
+    return 0;
+}
