@@ -18,7 +18,11 @@ void func(int connfd){
   for(;;){
     memset(buff,0, MAX);
     read(connfd, buff, sizeof(buff));
-    printf("From client: %s\n To client : ", buff);
+    fflush(stdout);
+    printf("From client: %s\n", buff);
+    fflush(stdout);
+    printf("To Client: \n");
+    fflush(stdout);
     memset(buff,0, MAX);
 
     fgets(buff, MAX, stdin);

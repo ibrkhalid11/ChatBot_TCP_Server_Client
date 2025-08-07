@@ -24,7 +24,7 @@ void func(int sockfd)
             break;
         }
         buff[strcspn(buff, "\n")] = '\0'; // Remove newline
-
+        fflush(stdout);
         // Send message to server
         write(sockfd, buff, strlen(buff));
 
@@ -38,7 +38,7 @@ void func(int sockfd)
         buff[n] = '\0'; // Null terminate
 
         printf("From Server: %s\n", buff);
-
+        fflush(stdout);
         // Exit on "exit"
         if (strncmp(buff, "exit", 4) == 0) {
             printf("Client Exit...\n");
@@ -63,7 +63,9 @@ int main()
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(PORT);
-    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    servaddr.sin_addr.s_addr = inet_addr("10.0.0.17"); /* 10.0.0.17 is the raspberry pi
+							* wifi addr on my network
+							*/
 
     // Connect to server
     if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) != 0) {
