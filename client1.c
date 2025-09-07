@@ -63,7 +63,7 @@ int main()
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(PORT);
-    servaddr.sin_addr.s_addr = inet_addr("10.0.0.17"); /* 10.0.0.17 is the raspberry pi
+    servaddr.sin_addr.s_addr = inet_addr("10.0.0.26"); /* 10.0.0.17 is the raspberry pi
 							* wifi addr on my network
 							*/
 
