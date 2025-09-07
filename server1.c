@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> /*not strings.h*/ /*remove all mention of bzero with memset*/
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -12,26 +13,46 @@
 #define PORT 8080 /*verify this is a good port with ss -tulnp */
 #define SA struct sockaddr
 
+int get_ai_response(const char *input, char *output, int maxlen){
+    int sockfd;
+    struct sockaddr_in servaddr;
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sockfd < 0) return -1;
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(9090);
+    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    if(connect(sockfd,(struct sockaddr *)&servaddr, sizeof(servaddr)) < 0 ){
+        close(sockfd);
+        return -1;
+    }
+    write(sockfd, input, strlen(input));
+    int n = read(sockfd, output, maxlen - 1);
+    if (n > 0) output[n] = '\0';
+    close(sockfd);
+    return n;
+}
 
 void func(int connfd){
   char buff[MAX];
+  char reply[MAX];
   for(;;){
     memset(buff,0, MAX);
-    read(connfd, buff, sizeof(buff));
-    fflush(stdout);
-    printf("From client: %s\n", buff);
-    fflush(stdout);
-    printf("To Client: \n");
-    fflush(stdout);
-    memset(buff,0, MAX);
-
-    fgets(buff, MAX, stdin);
-    buff[strcspn(buff, "\n")] = '\0';
-    
-    write(connfd, buff, sizeof(buff));
-    if(strncmp("exit", buff, 4) == 0){
-      printf("Server Exit...\n"); break;
+    int n = read(connfd, buff, sizeof(buff) - 1);
+    if(n <= 0) break;
+    buff[n] = '\0';
+    printf("From Client %s\n", buff);
+    if(strncmp(buff, "exit", 4) == 0){
+        strcpy(reply, "server closing connection\n");
+    } 
+    else{
+        if (get_ai_response(buff, reply, MAX) < 0)
+            strcpy(reply, "AI server not available.");
     }
+    printf("To Client: %s\n", reply);
+    write(connfd, reply, strlen(reply));
+    if (strncmp(buff, "exit", 4) == 0) break;
   }
 }
 
